@@ -26,8 +26,11 @@ function SearchResults() {
       return;
     }
     setLoading(true);
-    fetch("/search-index.json")
-      .then((r) => r.json())
+    fetch("/api/search-index")
+      .then((r) => {
+        if (!r.ok) throw new Error("Search index unavailable");
+        return r.json();
+      })
       .then((data: SearchEntry[]) => {
         const fuse = new Fuse(data, FUSE_OPTIONS);
         setResults(fuse.search(q, { limit: 50 }));

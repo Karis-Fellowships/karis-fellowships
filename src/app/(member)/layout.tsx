@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import type { NavTier } from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { createServerClient } from "@/lib/supabase-server";
+import { getMemberProfile } from "@/lib/require-tier";
 import { redirect } from "next/navigation";
 
 // Member areas should never be indexed — defense-in-depth alongside robots.txt.
@@ -10,20 +10,15 @@ export const metadata = {
 };
 
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // An Auth session with no active membership row is not a member. Do not
+  // default that case to an NHG view.
+  const profile = await getMemberProfile();
+  if (!profile) redirect("/login");
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select("tier")
-    .eq("id", user.id)
-    .single();
-
-  const tier: NavTier = (profile?.tier as NavTier) ?? "nhg";
+  const tier: NavTier =
+    profile.tier === "nhg" || profile.tier === "kf" || profile.tier === "admin"
+      ? profile.tier
+      : null;
 
   return (
     <>

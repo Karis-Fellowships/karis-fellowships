@@ -1,6 +1,8 @@
 import PageHeader from "@/components/PageHeader";
+import { requirePaidNHG } from "@/lib/require-tier";
 
-export default function NHGMeetingsPage() {
+export default async function NHGMeetingsPage() {
+  await requirePaidNHG();
   return (
     <div className="min-h-screen bg-[#4a5568]">
       <PageHeader title="Attend NHG Meetings" subtitle="Conference call information and meeting details." accent="teal" image="/sunlight-nature.jpg" imageAlt="Sunlight through nature" payg />
