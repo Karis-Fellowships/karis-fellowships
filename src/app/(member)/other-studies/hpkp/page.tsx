@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createServerClient } from "@/lib/supabase-server";
 import { docUrl } from "@/lib/storage-url";
 import { getMeetingCodes, phoneNumber, firstCode } from "@/lib/meeting-codes";
+import { requireKF } from "@/lib/require-tier";
 
 const readingGuides = [
   { label: "Chapters 1 & 2 Reading Guide (PDF)", href: "/docs/other-studies/hpkp/1-pdf-Rdg-Gd-Ch-1-2-HPKP-2025z.pdf" },
@@ -32,6 +33,7 @@ const furtherReading = [
 ];
 
 export default async function HPKPPage() {
+  await requireKF();
   const codes = await getMeetingCodes();
   const callPhone = phoneNumber(codes);
   const accessCode = firstCode(codes, "hpkp");

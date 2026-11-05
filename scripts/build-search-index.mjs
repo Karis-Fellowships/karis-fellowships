@@ -11,7 +11,12 @@ const lessons = fs.existsSync(LESSONS_PATH)
   ? JSON.parse(fs.readFileSync(LESSONS_PATH, "utf-8"))
   : {};
 const DOCS_DIR = path.join(ROOT, "public", "docs");
-const OUTPUT = path.join(ROOT, "public", "search-index.json");
+// Members-only. Served by /api/search-index after a KF membership check.
+// Never write this under public/ — that path is unauthenticated static hosting.
+const OUTPUT = path.join(ROOT, "src", "data", "search-index.json");
+if (OUTPUT.includes(`${path.sep}public${path.sep}`)) {
+  throw new Error("Search index must not be written under public/");
+}
 
 const SECTION_MAP = {
   "toolbox/worksheets": "Toolbox / Worksheets",

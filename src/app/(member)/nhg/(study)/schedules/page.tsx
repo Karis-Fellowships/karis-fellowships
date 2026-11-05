@@ -1,6 +1,8 @@
 import PageHeader from "@/components/PageHeader";
+import { requirePaidNHG } from "@/lib/require-tier";
 
-export default function NHGSchedulesPage() {
+export default async function NHGSchedulesPage() {
+  await requirePaidNHG();
   return (
     <div className="min-h-screen bg-[#4a5568]">
       <PageHeader title="Schedules & Reading Guides" subtitle="Study schedules, chapter guides, and study plan options for the NHG book study." accent="amber" image="/path-nature.jpg" imageAlt="Path through nature" payg />

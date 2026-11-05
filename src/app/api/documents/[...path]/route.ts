@@ -1,25 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { kfContentOpen, readMembership, type MemberProfile } from "@/lib/require-tier";
 
 export const dynamic = "force-dynamic";
 
 const BUCKET = "documents";
 const SIGNED_URL_TTL_SECONDS = 60;
 
-// Mirrors the route gating in src/proxy.ts:
-// - nhg/facilitator/ material is KF/admin only (it's for the people running the
-//   meetings), even though it lives under the nhg/ folder.
-// - Other nhg/ material (reading guides, introductions) is available to paid
-//   NHG members and to KF/admin.
+// Mirrors the route gating in src/proxy.ts, plus the yearly KF registration
+// gate (kfContentOpen) so a middleware bypass cannot sign lesson files:
+// - nhg/facilitator/ material is current KF/admin only.
+// - Other nhg/ material is paid NHG, any active KF, or admin.
 // - Everything else (lessons, questions, toolbox, kf-resources, facilitator,
-//   other-studies) is KF-tier content.
-function isAllowed(pathSegments: string[], tier: string | null, nhgPaid: boolean): boolean {
-  const kfOrAdmin = tier === "kf" || tier === "admin";
-  if (pathSegments[0] === "nhg" && pathSegments[1] === "facilitator") return kfOrAdmin;
-  if (pathSegments[0] === "nhg") return kfOrAdmin || (tier === "nhg" && nhgPaid);
-  return kfOrAdmin;
+//   other-studies) is current KF or admin.
+function isAllowed(pathSegments: string[], profile: MemberProfile): boolean {
+  // KF files also require this year's registration when the member was invited.
+  // A bare or unpaid NHG profile gets neither NHG nor KF files.
+  const kf = kfContentOpen(profile);
+  const nhgMaterials =
+    kf || profile.tier === "kf" || profile.tier === "admin" || (profile.tier === "nhg" && profile.nhgPaid);
+  if (pathSegments[0] === "nhg" && pathSegments[1] === "facilitator") return kf;
+  if (pathSegments[0] === "nhg") return nhgMaterials;
+  return kf;
 }
 
 export async function GET(
@@ -31,34 +34,26 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const gate = await readMembership();
+  if (gate.status === "anonymous") {
     // Member-only content: send unauthenticated requests to log in.
     return NextResponse.redirect(new URL("/login", request.url));
   }
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select("tier, active, nhg_paid")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !profile.active) {
+  if (gate.status !== "ok") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   // Each hit mints a service-role signed URL against private Storage. Cap per
   // member so a logged-in account can't script bulk signing/enumeration; the
   // limit is generous enough for normal lesson/document browsing.
-  if (!(await checkRateLimit(`docs:${user.id}`, 120, 600))) {
+  if (!(await checkRateLimit(`docs:${gate.profile.userId}`, 120, 600))) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down and try again shortly." },
       { status: 429 }
     );
   }
 
-  if (!isAllowed(path, profile.tier, !!profile.nhg_paid)) {
+  if (!isAllowed(path, gate.profile)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

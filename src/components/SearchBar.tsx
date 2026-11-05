@@ -68,7 +68,8 @@ export default function SearchBar() {
     if (fuse || loading) return;
     setLoading(true);
     try {
-      const res = await fetch("/search-index.json");
+      const res = await fetch("/api/search-index");
+      if (!res.ok) throw new Error("Search index unavailable");
       const data: SearchEntry[] = await res.json();
       setFuse(new Fuse(data, FUSE_OPTIONS));
     } catch {

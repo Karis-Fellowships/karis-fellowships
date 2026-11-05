@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase-admin";
+import { kfContentOpen, type MemberProfile } from "@/lib/require-tier";
 import { createServerClient } from "@/lib/supabase-server";
 import { todayCentral } from "@/lib/today-central";
 
@@ -41,11 +42,18 @@ export async function getKFActor(): Promise<{ userId: string; email: string | nu
   if (!user) return null;
   const { data: profile } = await supabase
     .from("users")
-    .select("tier, active, name")
+    .select("tier, active, name, kf_invited, kf_registered_year")
     .eq("id", user.id)
     .single();
   if (!profile || !profile.active) return null;
-  if (profile.tier !== "kf" && profile.tier !== "admin") return null;
+  const membership: MemberProfile = {
+    userId: user.id,
+    tier: profile.tier,
+    nhgPaid: false,
+    kfInvited: !!profile.kf_invited,
+    kfRegisteredYear: (profile.kf_registered_year as number | null) ?? null,
+  };
+  if (!kfContentOpen(membership)) return null;
   return { userId: user.id, email: user.email ?? null, name: profile.name ?? null };
 }
 

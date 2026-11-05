@@ -9,6 +9,7 @@ import IntroMeetingBlock from "@/components/IntroMeetingBlock";
 import WeekendIntensiveSchedule from "@/components/WeekendIntensiveSchedule";
 import ReadingGuideButton from "@/components/ReadingGuideButton";
 import { getMeetingCodes, phoneNumber, sectionCodes } from "@/lib/meeting-codes";
+import { requirePaidNHG } from "@/lib/require-tier";
 import { nhgCard, nhgFeatured, nhgCardHover, nhgCardLight, nhgCardLightHover } from "@/lib/nhg-surface";
 
 // `guide` = the PDF reading guide; `doc` = the typed Word (.docx) version (same
@@ -69,6 +70,7 @@ const weekendIntensiveDayPlan: { offset: number; sessions: { label: string; time
 ];
 
 export default async function NHGPage() {
+  await requirePaidNHG();
   const nhg = await getNHGStatus();
   const meetingCodes = await getMeetingCodes();
   const callPhone = phoneNumber(meetingCodes);
