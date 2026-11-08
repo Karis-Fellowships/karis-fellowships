@@ -1,7 +1,9 @@
 import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
+import { requirePaidNHG } from "@/lib/require-tier";
 
-export default function NHGStartHerePage() {
+export default async function NHGStartHerePage() {
+  await requirePaidNHG();
   return (
     <div className="min-h-screen bg-[#4a5568]">
       <PageHeader title="NHG — Start Here" subtitle="Welcome to the Neurosis and Human Growth book study." accent="coral" image="/forest-light.jpg" imageAlt="Light breaking through the forest" payg />

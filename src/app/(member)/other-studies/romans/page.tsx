@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createServerClient } from "@/lib/supabase-server";
 import { docUrl } from "@/lib/storage-url";
 import { getMeetingCodes, phoneNumber, firstCode } from "@/lib/meeting-codes";
+import { requireKF } from "@/lib/require-tier";
 
 const studyGuides = [
   { label: "Chapter 1 Study Guide", href: "/docs/other-studies/romans/1-Chap.-Study-Guide-Romans-2014-v3n.docx", type: "docx" },
@@ -33,6 +34,7 @@ const summaries = [
 ];
 
 export default async function RomansPage() {
+  await requireKF();
   const codes = await getMeetingCodes();
   const callPhone = phoneNumber(codes);
   const accessCode = firstCode(codes, "romans");

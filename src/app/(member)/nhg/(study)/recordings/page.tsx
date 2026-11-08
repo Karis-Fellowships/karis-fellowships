@@ -1,6 +1,8 @@
 import PageHeader from "@/components/PageHeader";
+import { requirePaidNHG } from "@/lib/require-tier";
 
-export default function NHGRecordingsPage() {
+export default async function NHGRecordingsPage() {
+  await requirePaidNHG();
   return (
     <div className="min-h-screen bg-[#4a5568]">
       <PageHeader title="NHG Recordings" subtitle="Recordings from past NHG sessions for review and catch-up." accent="sky" image="/waterfall.jpg" imageAlt="Waterfall in nature" payg />

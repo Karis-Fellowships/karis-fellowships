@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import FacilitatorSection from "@/components/FacilitatorSection";
 import { getKFActor } from "@/lib/facilitator";
+import { requireKF } from "@/lib/require-tier";
 
 // NHG Facilitator Resources — its own KF-members-only page: general facilitator
 // guides + the meeting sign-up board. Gated server-side via getKFActor (active
@@ -9,6 +10,7 @@ import { getKFActor } from "@/lib/facilitator";
 // /nhg/facilitator as a KF-only route (defense in depth), and the claim/release
 // API routes re-check KF as well.
 export default async function FacilitatorPage() {
+  await requireKF();
   const actor = await getKFActor();
   if (!actor) redirect("/nhg");
 
